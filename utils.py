@@ -8,6 +8,7 @@ from aiogram.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
+from asyncpg import Record
 
 from config import (
     pictures_dir,
@@ -37,3 +38,18 @@ def get_inline_keyboard(*args: str):
     buttons = [InlineKeyboardButton(text=text, callback_data=text) for text in args]
 
     return InlineKeyboardMarkup(inline_keyboard=[buttons])
+
+
+def chunk_list(input_list: list, chunk_size: int) -> list:
+    chunked_list = []
+    for i in range(0, len(input_list), chunk_size):
+        chunked_list.append(input_list[i:i + chunk_size])
+
+    return chunked_list
+
+def make_answer(order: Record) -> str:
+    answer = (
+        f"id={order['id']}\n user_id={order['user_id']}\nuser_name={order['user_name']}"
+        f"\nфутболка={order['shirt']}\nразмер={order['size']}"
+    )
+    return answer

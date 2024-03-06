@@ -16,6 +16,7 @@ from aiogram_media_group import (
 )
 
 from config import (
+    GROUP_ID,
     log,
 )
 from constants import (
@@ -40,10 +41,12 @@ from database.connection import (
     Db,
 )
 from utils import (
+    chunk_list,
     get_inline_keyboard,
     get_input_file,
     get_keyboard,
     get_photo,
+    make_answer,
 )
 
 
@@ -81,13 +84,19 @@ async def buy(message: types.Message) -> None:
 
 
 @router.callback_query(F.data.in_({BLACK_SHIRT, WHITE_SHIRT}))
-async def shirt(callback: types.CallbackQuery) -> None:
+async def shirt(callback: types.CallbackQuery, db: Db) -> None:
+    user_id = callback.from_user.id
+    select_shirt = callback.data
+    await db.add_shrit(user_id, select_shirt)
     keyboard = get_keyboard("S", "M", "L", "XL")
     await callback.message.answer(CHOICE_SIZE, reply_markup=keyboard)
 
 
 @router.message(F.text.in_({"S", "M", "L", "XL"}))
-async def choice_size(message: types.Message) -> None:
+async def choice_size(message: types.Message, db: Db) -> None:
+    user_id = message.from_user.id
+    size = message.text
+    await db.add_size(user_id, size)
     keyboard = get_keyboard(MAIN_MENU)
     await message.answer(ABOUT, reply_markup=keyboard)
     inline_keyboard = get_inline_keyboard(SBER, TINKOFF)
@@ -102,3 +111,51 @@ async def payment_sber(callback: types.CallbackQuery) -> None:
 @router.callback_query(F.data == TINKOFF)
 async def payment_tinkoff(callback: types.CallbackQuery) -> None:
     await callback.message.answer(TINKOFF_INSTRUCTION, reply_markup=types.ReplyKeyboardRemove())
+
+
+@router.message(F.media_group_id, F.content_type.in_({"photo", "document", "video"}))
+@media_group_handler
+async def catch_files(messages: list[types.Message], db: Db, bot: Bot) -> None:
+    user_id = None
+    for message in messages:
+        document_id = getattr(message.document, "file_id", None)
+        photo_id = getattr(message.photo[-1], "file_id", None) if message.photo else None
+        video_id = getattr(message.video, "file_id", None) if message.video else None
+        user_id = message.from_user.id if not user_id else user_id
+        await db.add_document(user_id, document_id, photo_id, video_id)
+
+    files = []
+    pics, docs, videos = await db.get_documents(user_id)
+    files.extend([types.InputMediaPhoto(media=pic) for pic in pics])
+    files.extend([types.InputMediaDocument(media=doc) for doc in docs])
+    files.extend([types.InputMediaVideo(media=video) for video in videos])
+    order = await db.get_order(user_id)
+    answer = make_answer(order)
+
+    if files:
+        files = chunk_list(files, 9)
+    else:
+        files = [files]
+
+    for file in files:
+        await bot.send_media_group(GROUP_ID, file)
+
+    await bot.send_message(GROUP_ID, answer)
+
+
+@router.message(F.content_type.in_({"photo", "document", "video"}))
+async def catch_file(message: types.Message, db: Db, bot: Bot) -> None:
+    document_id = getattr(message.document, "file_id", None)
+    photo_id = getattr(message.photo[-1], "file_id", None) if message.photo else None
+    video_id = getattr(message.video, "file_id", None) if message.video else None
+    user_id = message.from_user.id
+    await db.add_document(user_id, document_id, photo_id, video_id)
+    files = []
+    pics, docs, videos = await db.get_documents(user_id)
+    files.extend([types.InputMediaPhoto(media=pic) for pic in pics])
+    files.extend([types.InputMediaDocument(media=doc) for doc in docs])
+    files.extend([types.InputMediaVideo(media=video) for video in videos])
+    order = await db.get_order(user_id)
+    answer = make_answer(order)
+    await bot.send_media_group(GROUP_ID, files)
+    await bot.send_message(GROUP_ID, answer)
