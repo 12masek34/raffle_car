@@ -152,10 +152,10 @@ async def catch_file(message: types.Message, db: Db, bot: Bot) -> None:
     await db.add_document(user_id, document_id, photo_id, video_id)
     files = []
     pics, docs, videos = await db.get_documents(user_id)
+    order = await db.get_order(user_id)
+    answer = make_answer(order)
     files.extend([types.InputMediaPhoto(media=pic) for pic in pics])
     files.extend([types.InputMediaDocument(media=doc) for doc in docs])
     files.extend([types.InputMediaVideo(media=video) for video in videos])
-    order = await db.get_order(user_id)
-    answer = make_answer(order)
     await bot.send_media_group(GROUP_ID, files)
     await bot.send_message(GROUP_ID, answer)
