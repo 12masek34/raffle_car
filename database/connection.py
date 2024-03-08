@@ -50,6 +50,16 @@ class Db:
                     f" Пользователь user_id={user_id} id={id_} добавил размер {size}"
                 )
 
+    async def aprove(self, id_: int | str):
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                id_ = await con.fetchval(queries.update_status, int(id_))
+                log.info(
+                    f" Пользователь id={id_} подтвердил статус оплаты"
+                )
+                return id_
+
+
     async def add_document(
         self,
         user_id: int,
@@ -99,6 +109,15 @@ class Db:
                         f"{len(videos)} видео и {len(pics)} фото")
 
         return pics, docs, videos
+
+    async def get_report(self, user_id: int):
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                report = await con.fetch(queries.select_report)
+                log.info(
+                    f" Получен отчет пользователем {user_id}"
+                )
+                return report
 
 
 async def init_db() -> Db:

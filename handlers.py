@@ -21,6 +21,7 @@ from config import (
 )
 from constants import (
     ABOUT,
+    APROVE,
     BACK,
     BLACK_SHIRT,
     BUY,
@@ -28,8 +29,11 @@ from constants import (
     BUY_SHIRT,
     CHOICE_SHIRT,
     CHOICE_SIZE,
+    ERROR,
     MAIN_MENU,
     PARTICIPATE,
+    PERMISSION_DENIED,
+    REPORT,
     SBER,
     SBER_INSTRUCTIONS,
     START_TEXT,
@@ -42,10 +46,12 @@ from database.connection import (
 )
 from utils import (
     chunk_list,
+    get_admins,
     get_inline_keyboard,
     get_input_file,
     get_keyboard,
     get_photo,
+    get_report,
     make_answer,
 )
 
@@ -113,6 +119,19 @@ async def payment_tinkoff(callback: types.CallbackQuery) -> None:
     await callback.message.answer(TINKOFF_INSTRUCTION, reply_markup=types.ReplyKeyboardRemove())
 
 
+@router.callback_query(F.data.startswith(APROVE))
+async def aprove(callback: types.CallbackQuery, db: Db) -> None:
+    id_ = callback.data.split("=")[-1]
+    id_ = await db.aprove(id_)
+
+    if id_:
+        answer = f"Оплата подтверждена id={id_}"
+    else:
+        answer = ERROR
+
+    await callback.message.answer(answer)
+
+
 @router.message(F.media_group_id, F.content_type.in_({"photo", "document", "video"}))
 @media_group_handler
 async def catch_files(messages: list[types.Message], db: Db, bot: Bot) -> None:
@@ -131,6 +150,7 @@ async def catch_files(messages: list[types.Message], db: Db, bot: Bot) -> None:
     files.extend([types.InputMediaVideo(media=video) for video in videos])
     order = await db.get_order(user_id)
     answer = make_answer(order)
+    keyboard = get_inline_keyboard(APROVE + f" id={order['id']}")
 
     if files:
         files = chunk_list(files, 9)
@@ -140,7 +160,7 @@ async def catch_files(messages: list[types.Message], db: Db, bot: Bot) -> None:
     for file in files:
         await bot.send_media_group(GROUP_ID, file)
 
-    await bot.send_message(GROUP_ID, answer)
+    await bot.send_message(GROUP_ID, answer, reply_markup=keyboard)
 
 
 @router.message(F.content_type.in_({"photo", "document", "video"}))
@@ -157,5 +177,19 @@ async def catch_file(message: types.Message, db: Db, bot: Bot) -> None:
     files.extend([types.InputMediaPhoto(media=pic) for pic in pics])
     files.extend([types.InputMediaDocument(media=doc) for doc in docs])
     files.extend([types.InputMediaVideo(media=video) for video in videos])
+    keyboard = get_inline_keyboard(APROVE + f" id={order['id']}")
     await bot.send_media_group(GROUP_ID, files)
-    await bot.send_message(GROUP_ID, answer)
+    await bot.send_message(GROUP_ID, answer, reply_markup=keyboard)
+
+
+@router.message(F.text.lower() == REPORT)
+async def report(message: types.Message, db: Db) -> None:
+    admins = get_admins()
+    user_id = message.from_user.id
+
+    if user_id in admins:
+        answer = await get_report(db, user_id)
+        await message.answer_document(answer)
+    else:
+        answer = PERMISSION_DENIED
+        await message.answer(answer)

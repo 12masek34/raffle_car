@@ -1,4 +1,6 @@
-
+from asyncio import start_server
+from io import BytesIO
+import pandas as pd
 from aiogram.enums import ParseMode
 from aiogram.types import (
     BufferedInputFile,
@@ -11,8 +13,10 @@ from aiogram.types import (
 from asyncpg import Record
 
 from config import (
+    ADMIN,
     pictures_dir,
 )
+from database.connection import Db
 
 
 def get_input_file(file_name: str) -> BufferedInputFile:
@@ -53,3 +57,38 @@ def make_answer(order: Record) -> str:
         f"\nфутболка={order['shirt']}\nразмер={order['size']}"
     )
     return answer
+
+def get_admins() -> list:
+    return [int(admin) for admin in ADMIN.split(",")]
+
+async def get_report(db: Db, user_id: int) -> BufferedInputFile:
+    report = await db.get_report(user_id)
+    sheet_name = "Отчет"
+    df = pd.DataFrame(
+        report,
+        columns=[
+            "id",
+            "user_id",
+            "user_login",
+            "user_name",
+            "футболка",
+            "размер",
+            "время покупки",
+        ],
+    )
+    file = BytesIO()
+    writer = pd.ExcelWriter(file)
+    df["время покупки"] = df["время покупки"].dt.strftime("%Y/%m/%d %H:%M:%S")
+    df.to_excel(writer, index=False, sheet_name=sheet_name)
+    worksheet = writer.sheets[sheet_name]
+
+    for idx, col in enumerate(df.columns, start=1):
+        column = str(chr(64 + idx))
+        max_len = max(df[col].astype(str).map(len).max(), len(col)) + 5
+        worksheet.column_dimensions[column].width = max_len
+
+    writer.close()
+    file.seek(0)
+
+
+    return BufferedInputFile(file.read(), "отчет.xlsx")

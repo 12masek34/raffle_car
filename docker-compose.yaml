@@ -2,6 +2,8 @@ version: '3.9'
 
 services:
   raffle_car:
+    tty: true
+    stdin_open: true
     build:
       context: .
     restart: on-failure

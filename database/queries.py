@@ -8,7 +8,9 @@ create_raffle = """
         size TEXT,
         photo_ids TEXT[],
         document_ids TEXT[],
-        video_ids TEXT[]
+        video_ids TEXT[],
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        aprove BOOLEAN NOT NULL DEFAULT false
     );
 """
 
@@ -43,4 +45,24 @@ select_order = """
         shirt,
         size
     FROM raffle WHERE id = (SELECT id FROM raffle WHERE user_id = $1 ORDER BY id DESC LIMIT 1)
+"""
+
+select_report = """
+    SELECT
+        id,
+        user_id,
+        user_login,
+        user_name,
+        shirt,
+        size,
+        created_at
+    FROM raffle
+    WHERE aprove = true
+    ORDER BY id
+"""
+update_status = """
+    UPDATE raffle
+    SET aprove = true
+    WHERE id = $1
+    RETURNING id
 """
