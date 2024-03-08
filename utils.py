@@ -54,7 +54,7 @@ def chunk_list(input_list: list, chunk_size: int) -> list:
 def make_answer(order: Record) -> str:
     answer = (
         f"id={order['id']}\n user_id={order['user_id']}\nuser_name={order['user_name']}"
-        f"\nфутболка={order['shirt']}\nразмер={order['size']}"
+        f"\nuser_login={order['user_login']}\nфутболка={order['shirt']}\nразмер={order['size']}"
     )
     return answer
 
