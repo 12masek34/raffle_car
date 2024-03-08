@@ -78,7 +78,8 @@ async def get_report(db: Db, user_id: int) -> BufferedInputFile:
     )
     file = BytesIO()
     writer = pd.ExcelWriter(file)
-    df["время покупки"] = df["время покупки"].dt.strftime("%Y/%m/%d %H:%M:%S")
+    if not df["время покупки"].empty:
+        df["время покупки"] = df["время покупки"].dt.strftime("%Y/%m/%d %H:%M:%S")
     df.to_excel(writer, index=False, sheet_name=sheet_name)
     worksheet = writer.sheets[sheet_name]
 
