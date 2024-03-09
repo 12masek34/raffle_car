@@ -59,6 +59,13 @@ class Db:
                 )
                 return id_
 
+    async def add_identification(self, user_id: int | None, identification: str | None) -> None:
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                id_ = await con.fetchval(queries.insert_field.format(field="identification"), user_id, identification)
+                log.info(
+                    f" Пользователь user_id={user_id} id={id_} добавил свои данные {identification}"
+                )
 
     async def add_document(
         self,

@@ -44,6 +44,7 @@ from constants import (
 from database.connection import (
     Db,
 )
+from states import IdentificationState
 from utils import (
     chunk_list,
     get_admins,
@@ -99,14 +100,33 @@ async def shirt(callback: types.CallbackQuery, db: Db) -> None:
 
 
 @router.message(F.text.in_({"S", "M", "L", "XL"}))
-async def choice_size(message: types.Message, db: Db) -> None:
+async def choice_size(message: types.Message, db: Db, state: FSMContext) -> None:
     user_id = message.from_user.id
     size = message.text
     await db.add_size(user_id, size)
     keyboard = get_keyboard(MAIN_MENU)
     await message.answer(ABOUT, reply_markup=keyboard)
+    await state.set_state(IdentificationState.identification)
+
+
+@router.message(IdentificationState.identification)
+async def input_identification(message: types.Message, state: FSMContext, db: Db) -> None:
+    document_id = getattr(message.document, "file_id", None)
+    photo_id = getattr(message.photo[-1], "file_id", None) if message.photo else None
+
+    if document_id or photo_id:
+        await message.answer(
+            "Нужно ввести текстом.",
+        )
+        await state.set_state(IdentificationState.identification)
+        return
+
+    user_id = message.from_user.id
+    identification = message.text
+    await db.add_identification(user_id, identification)
     inline_keyboard = get_inline_keyboard(SBER, TINKOFF)
     await message.answer(BUY_DESCRIPTION, reply_markup=inline_keyboard)
+    await state.set_state(IdentificationState.done)
 
 
 @router.callback_query(F.data == SBER)

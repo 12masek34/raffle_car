@@ -6,6 +6,7 @@ create_raffle = """
         user_name TEXT,
         shirt TEXT,
         size TEXT,
+        identification TEXT,
         photo_ids TEXT[],
         document_ids TEXT[],
         video_ids TEXT[],
@@ -42,6 +43,7 @@ select_order = """
         user_id,
         user_login,
         user_name,
+        identification,
         shirt,
         size
     FROM raffle WHERE id = (SELECT id FROM raffle WHERE user_id = $1 ORDER BY id DESC LIMIT 1)
@@ -53,6 +55,7 @@ select_report = """
         user_id,
         user_login,
         user_name,
+        identification,
         shirt,
         size,
         created_at

@@ -53,8 +53,9 @@ def chunk_list(input_list: list, chunk_size: int) -> list:
 
 def make_answer(order: Record) -> str:
     answer = (
-        f"id={order['id']}\n user_id={order['user_id']}\nuser_name={order['user_name']}"
-        f"\nuser_login={order['user_login']}\nфутболка={order['shirt']}\nразмер={order['size']}"
+        f"id={order['id']}\n id (телеграм)={order['user_id']}\nимя (телеграм)={order['user_name']}"
+        f"\nлогин (телеграм)={order['user_login']}\nпользовательские данные=\n{order['identification']}\n"
+        f"футболка={order['shirt']}\nразмер={order['size']}"
     )
     return answer
 
@@ -68,9 +69,10 @@ async def get_report(db: Db, user_id: int) -> BufferedInputFile:
         report,
         columns=[
             "id",
-            "user_id",
-            "user_login",
-            "user_name",
+            "id (телеграм)",
+            "логин (телеграм)",
+            "имя (телеграм)",
+            "пользовательские данные",
             "футболка",
             "размер",
             "время покупки",
