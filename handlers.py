@@ -30,6 +30,7 @@ from constants import (
     CHOICE_SHIRT,
     CHOICE_SIZE,
     ERROR,
+    HINT,
     MAIN_MENU,
     PARTICIPATE,
     PERMISSION_DENIED,
@@ -68,18 +69,15 @@ async def cmd_start(message: types.Message, db: Db) -> None:
     first_name = message.from_user.first_name
     log.info(f" Пользователь user_id={user_id} user_name={first_name} user_login={user_name} стартует бота")
     await db.add_raffle(user_id, user_name, first_name)
-    photo_front = get_input_file("mark.jpeg")
+    photo_front = get_input_file("main.MP4")
     keyboard = get_keyboard(PARTICIPATE)
-    await message.answer_photo(photo_front, caption=START_TEXT, reply_markup=keyboard)
+    await message.answer_video(photo_front, caption=START_TEXT, reply_markup=keyboard)
 
 
 @router.message(F.text.lower().in_({PARTICIPATE.lower(), BACK.lower(), MAIN_MENU.lower()}))
 async def participate(message: types.Message) -> None:
-    photo_black = get_photo("black.jpeg", BUY_SHIRT, ParseMode.HTML)
-    photo_white = get_photo("white.jpeg")
     keyboard = get_keyboard(BUY)
-    await message.answer_media_group([photo_black, photo_white])
-    await message.answer("купить футболку 👇", reply_markup=keyboard)
+    await message.answer(BUY_SHIRT, reply_markup=keyboard)
 
 
 @router.message(F.text.lower() == BUY.lower())
@@ -87,7 +85,7 @@ async def buy(message: types.Message) -> None:
     keyboard = get_keyboard(BACK)
     inline_keyboard = get_inline_keyboard(BLACK_SHIRT, WHITE_SHIRT)
     await message.answer(CHOICE_SHIRT, reply_markup=inline_keyboard)
-    await message.answer("Футболка-1990₽", reply_markup=keyboard)
+    await message.answer(HINT, reply_markup=keyboard)
 
 
 @router.callback_query(F.data.in_({BLACK_SHIRT, WHITE_SHIRT}))
