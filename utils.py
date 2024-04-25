@@ -7,6 +7,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     InputMediaPhoto,
+    InputMediaVideo,
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
@@ -30,6 +31,11 @@ def get_photo(file_name: str, capation: str | None = None, parse_mode: ParseMode
     file_ = get_input_file(file_name)
 
     return InputMediaPhoto(media=file_, caption=capation, parse_mode=parse_mode)
+
+def get_video(file_name: str, capation: str | None = None, parse_mode: ParseMode | None = None) -> InputMediaVideo:
+    file_ = get_input_file(file_name)
+
+    return InputMediaVideo(media=file_, caption=capation, parse_mode=parse_mode)
 
 
 def get_keyboard(*args: str) -> ReplyKeyboardMarkup:

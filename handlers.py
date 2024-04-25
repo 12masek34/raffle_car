@@ -53,6 +53,7 @@ from utils import (
     get_input_file,
     get_keyboard,
     get_photo,
+    get_video,
     get_report,
     make_answer,
 )
@@ -69,14 +70,19 @@ async def cmd_start(message: types.Message, db: Db) -> None:
     first_name = message.from_user.first_name
     log.info(f" Пользователь user_id={user_id} user_name={first_name} user_login={user_name} стартует бота")
     await db.add_raffle(user_id, user_name, first_name)
-    photo_front = get_input_file("main.MP4")
+    main_video = get_input_file("main.MP4")
+    main_photo = get_input_file("mark.jpg")
     keyboard = get_keyboard(PARTICIPATE)
-    await message.answer_video(photo_front, caption=START_TEXT, reply_markup=keyboard)
+    await message.answer_photo(main_photo)
+    await message.answer_video(main_video, caption=START_TEXT, reply_markup=keyboard)
 
 
 @router.message(F.text.lower().in_({PARTICIPATE.lower(), BACK.lower(), MAIN_MENU.lower()}))
 async def participate(message: types.Message) -> None:
     keyboard = get_keyboard(BUY)
+    black_photo = get_photo("black.jpg")
+    white_photo = get_photo("white.jpg")
+    await message.answer_media_group([black_photo, white_photo])
     await message.answer(BUY_SHIRT, reply_markup=keyboard)
 
 
