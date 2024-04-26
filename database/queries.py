@@ -11,8 +11,7 @@ create_raffle = """
         document_ids TEXT[],
         video_ids TEXT[],
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        aprove BOOLEAN NOT NULL DEFAULT false,
-        chat_id BIGINT DEFAULT null
+        aprove BOOLEAN NOT NULL DEFAULT false
     );
 """
 
@@ -75,4 +74,8 @@ select_chat_id = """
         chat_id
     FROM raffle
     WHERE id = $1
+"""
+
+migration = """
+ALTER TABLE raffle ADD COLUMN IF NOT EXISTS chat_id BIGINT DEFAULT null;
 """

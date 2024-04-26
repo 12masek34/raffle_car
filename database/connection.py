@@ -149,5 +149,6 @@ async def init_db() -> Db:
     async with db.pool.acquire() as con:
         async with con.transaction():
             await con.execute(queries.create_raffle)
+            await con.execute(queries.migration)
 
     return db
