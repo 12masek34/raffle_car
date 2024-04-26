@@ -11,12 +11,13 @@ create_raffle = """
         document_ids TEXT[],
         video_ids TEXT[],
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        aprove BOOLEAN NOT NULL DEFAULT false
+        aprove BOOLEAN NOT NULL DEFAULT false,
+        chat_id BIGINT DEFAULT null
     );
 """
 
 insert_raffle = """
-    INSERT INTO raffle (user_id, user_login, user_name) values ($1, $2, $3) RETURNING id
+    INSERT INTO raffle (user_id, user_login, user_name, chat_id) values ($1, $2, $3, $4) RETURNING id
 """
 
 insert_field = """
@@ -68,4 +69,10 @@ update_status = """
     SET aprove = true
     WHERE id = $1
     RETURNING id
+"""
+select_chat_id = """
+    SELECT
+        chat_id
+    FROM raffle
+    WHERE id = $1
 """

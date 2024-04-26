@@ -1,10 +1,10 @@
+import logging
 from aiogram import (
     Bot,
     F,
     Router,
     types,
 )
-from aiogram.enums import ParseMode
 from aiogram.filters import (
     Command,
 )
@@ -53,7 +53,6 @@ from utils import (
     get_input_file,
     get_keyboard,
     get_photo,
-    get_video,
     get_report,
     make_answer,
 )
@@ -68,8 +67,9 @@ async def cmd_start(message: types.Message, db: Db) -> None:
     user_id = message.from_user.id
     user_name = message.from_user.username
     first_name = message.from_user.first_name
+    chat_id = message.chat.id
     log.info(f" Пользователь user_id={user_id} user_name={first_name} user_login={user_name} стартует бота")
-    await db.add_raffle(user_id, user_name, first_name)
+    await db.add_raffle(user_id, user_name, first_name, chat_id)
     main_video = get_input_file("main.MP4")
     main_photo = get_input_file("mark.jpg")
     keyboard = get_keyboard(PARTICIPATE)
@@ -144,12 +144,14 @@ async def payment_tinkoff(callback: types.CallbackQuery) -> None:
 
 
 @router.callback_query(F.data.startswith(APROVE))
-async def aprove(callback: types.CallbackQuery, db: Db) -> None:
+async def aprove(callback: types.CallbackQuery, db: Db, bot: Bot) -> None:
     id_ = callback.data.split("=")[-1]
     id_ = await db.aprove(id_)
 
     if id_:
         answer = f"Оплата подтверждена id={id_}"
+        chat_id = await db.get_chat_id(id_)
+        await bot.send_message(chat_id, f"Ваш номер {id_}")
     else:
         answer = ERROR
 

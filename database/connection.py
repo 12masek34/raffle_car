@@ -26,10 +26,16 @@ class Db:
         )
         log.info(" Есть коннект к базе")
 
-    async def add_raffle(self, user_id: int | None, user_login: str | None, user_name: str | None) -> None:
+    async def add_raffle(
+        self,
+        user_id: int | None,
+        user_login: str | None,
+        user_name: str | None,
+        chat_id: int | None,
+    ) -> None:
         async with self.pool.acquire() as con:
             async with con.transaction():
-                id_ = await con.fetchval(queries.insert_raffle, user_id, user_login, user_name)
+                id_ = await con.fetchval(queries.insert_raffle, user_id, user_login, user_name, chat_id)
                 log.info(
                     f" Создана запись user_id={user_id} id={id_}, user_login={user_login}, user_name={user_name}"
                 )
@@ -66,6 +72,15 @@ class Db:
                 log.info(
                     f" Пользователь user_id={user_id} id={id_} добавил свои данные {identification}"
                 )
+
+    async def get_chat_id(self, id_: int) -> int:
+        async with self.pool.acquire() as con:
+            async with con.transaction():
+                chat_id = await con.fetchval(queries.select_chat_id, id_)
+                log.info(
+                    f" Пользователь chat_id={chat_id} id={id_} подтвердил заказ"
+                )
+                return chat_id
 
     async def add_document(
         self,
