@@ -99,7 +99,12 @@ async def shirt(callback: types.CallbackQuery, db: Db) -> None:
     user_id = callback.from_user.id
     select_shirt = callback.data
     await db.add_shrit(user_id, select_shirt)
-    keyboard = get_keyboard("S", "M", "L", "XL")
+
+    if select_shirt == BLACK_SHIRT:
+        keyboard = get_keyboard("S", "M", "L", "XL")
+    else:
+        keyboard = get_keyboard("S", "M", "XL")
+
     await callback.message.answer(CHOICE_SIZE, reply_markup=keyboard)
 
 
