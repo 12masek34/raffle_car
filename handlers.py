@@ -99,11 +99,11 @@ async def shirt(callback: types.CallbackQuery, db: Db) -> None:
     user_id = callback.from_user.id
     select_shirt = callback.data
     await db.add_shrit(user_id, select_shirt)
-    keyboard = get_keyboard("S", "L", "XL")
+    keyboard = get_keyboard("S", "M", "L", "XL")
     await callback.message.answer(CHOICE_SIZE, reply_markup=keyboard)
 
 
-@router.message(F.text.in_({"S", "L", "XL"}))
+@router.message(F.text.in_({"S", "M", "L", "XL"}))
 async def choice_size(message: types.Message, db: Db, state: FSMContext) -> None:
     user_id = message.from_user.id
     size = message.text
