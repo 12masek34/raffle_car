@@ -16,9 +16,9 @@
 - *Docker* (контейнеризация и деплой)  
 
 ** 🛠️ Установка и запуск  
-  Клонировать репозиторий  
-   ```sh
+#+NAME: bash
+#+BEGIN_SRC bash
    git clone https://github.com/12masek34/raffle_car.git
    cd raffle_car
   docker compose up --build
-  ```
+#+END_SRC
